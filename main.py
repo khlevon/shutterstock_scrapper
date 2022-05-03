@@ -7,10 +7,8 @@ from multiprocessing import cpu_count
 from shutterstock_scrapper import ShutterstockDownloader, ShutterstockScrapper, ShutterstockCSVWriter
 
 
-def main(keywords, credentials):
-
-    root_path = Path("./scrapped_data")
-    root_path.mkdir(exist_ok=True)
+def main(keywords, credentials, root_dir):
+    root_dir.mkdir(exist_ok=True)
 
     scrapper_queue = Queue()
     downloader_queue = Queue()
@@ -37,7 +35,7 @@ def main(keywords, credentials):
                 downloader_queue,
                 writer_queue,
                 {
-                    "root_path": root_path,
+                    "root_path": root_dir,
                 }
             ),
             daemon=True
@@ -57,7 +55,7 @@ def main(keywords, credentials):
                     'category',
                     'file_path',
                 ],
-                "file_path": root_path / "metadata.csv"
+                "file_path": root_dir / "metadata.csv"
             }
         ),
         daemon=True
@@ -71,6 +69,8 @@ def main(keywords, credentials):
 if __name__ == "__main__":
 
     args = argparse.ArgumentParser(description='Shutterstock Scrapper')
+    args.add_argument('-d', '--root_dir', type=str, required=True,
+                      help='Path to folder where the images will be downloaded')
     args.add_argument('-k', '--keywords', type=str, required=True,
                       help='Path to file which contains keywords to search for')
     args.add_argument('-c', '--credentials', type=str, required=True,
@@ -90,9 +90,10 @@ if __name__ == "__main__":
     keywords = open(parsed_args.keywords,
                     "r").read().splitlines(keepends=False)
     credentials = json.loads(open(parsed_args.credentials, "r").read())
+    root_dir = Path(parsed_args.root_dir)
 
     print("Start scrapping")
 
-    main(keywords, credentials)
+    main(keywords, credentials, root_dir)
 
     print("Done!!!")
